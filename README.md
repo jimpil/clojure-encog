@@ -17,17 +17,20 @@ ps: This is still work in progress. Nonethelessthe neural nets and training meth
 
 --The jar(s)?
 -------------------
+
 As usual, it lives on clojars. Just add:
 ``` clojure
-[org.encog/encog-core "3.1.0"] ;official encog 3.1 release 
-[clojure-encog "0.3.0-SNAPSHOT"]
+[org.encog/encog-core "3.1.0"]   ;official encog 3.1 release 
+[clojure-encog "0.3.0-SNAPSHOT"] ;my code
 ```
 to your :dependencies and you 're good to go...
 
 
 --Quick demo:
 -------------
+
 Ok, most the networks are already functional so let's go ahead and make one. Let's assume that for some reason we need a feed-forward net with 32 input neurons, 1 output neuron (classification), and 2 hidden layers with 50 and 10 neurons respectively...We don't really care about the activation function at this point because we are not going to do anything useful with this particular network.
+
 ``` clojure
 (def network      ;;def-ing it here for demo purposes
     (make-network {:input   32
@@ -44,6 +47,7 @@ Most of the constructor-functions (make-something) accept keyword based argument
 
 Of course, now that we have the network we need to train it...well, that's easy too!
 first we are going to need some dummy data...
+
 ``` clojure
 (let [xor-input [[0.0 0.0] [1.0 0.0] [0.0 0.1] [1.0 1.0]]
       xor-ideal [[0.0] [1.0] [1.0] [0.0]] 
@@ -68,7 +72,7 @@ after training finishes you can start using the network as normal. For more in d
 ----------------
 Developed using Clojure 1.4
 Should work with 1.3 but not lower than that!
-Feel free to drop comments/opinions/suggestions/advice etc etc
+Feel free to drop comments/opinions/suggestions etc...
 
 
 This is still work in progress...If you're going to do any serious ML job with it, be prepared to write some Java simply because not everything has been wrapped. The plan is not to have to write any Java code by version 1.0. 
