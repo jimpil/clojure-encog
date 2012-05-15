@@ -34,7 +34,10 @@
 ))
 ;----------------------------------------------------------------------------------------------------------
 ;----------------------------------*LUNAR LANDER*-----------------------------------------------------------
-(defmacro pilot-score "The fitness function for the GA." 
+; this example requires that you have LanderSimulation.class NeuralPilot.class in your classpath.
+; both of them are in the jar.
+
+(defmacro pilot-score "The fitness function for the GA. You will usually pass your own to the GA." 
 [network] 
 `(. (NeuralPilot. ~network false) scorePilot))
 
@@ -62,6 +65,7 @@
      (recur (inc epoch) (. trainer iteration) (. trainer getMethod) )))))
 ;---------------------------------------------------------------------------------------------------------------
 
+;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
 (evaluate (lunar-lander 800))
 ;(xor false)
