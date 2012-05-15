@@ -15,20 +15,20 @@ ps: This is still work in progress. Nonethelessthe neural nets and training meth
 
 ## Usage
 
---Where is the jar(s)?
+--The jar(s)?
 -------------------
-As usual, it lives on clojars. 
-Just add:
-[org.encog/encog-core "3.1.0"] 
+As usual, it lives on clojars. Just add:
+``` clojure
+[org.encog/encog-core "3.1.0"] ;official encog 3.1 release 
 [clojure-encog "0.3.0-SNAPSHOT"]
-
-to your :dependencies.
+```
+to your :dependencies and you 're good to go...
 
 
 --Quick demo:
 -------------
 Ok, most the networks are already functional so let's go ahead and make one. Let's assume that for some reason we need a feed-forward net with 32 input neurons, 1 output neuron (classification), and 2 hidden layers with 50 and 10 neurons respectively...We don't really care about the activation function at this point because we are not going to do anything useful with this particular network.
-
+``` clojure
 (def network      ;;def-ing it here for demo purposes
     (make-network {:input   32
                    :output  1
@@ -37,14 +37,14 @@ Ok, most the networks are already functional so let's go ahead and make one. Let
                   (make-pattern     :feed-forward)))
                   
 ;;this is actually the neural pattern i used for my final year project at uni!                  
-
+```
 ...and voila! we get back the complete network initialised with random weights.
 
 Most of the constructor-functions (make-something) accept keyword based arguments. For the full list of options refer to documentation or source code. Don't worry if you accidentaly pass in wrong parameters to a network e.g wrong activation function for a specific net-type. Each concrete implementation of the 'make-network' multi-method ignores arguments that are not settable by a particular neural pattern!
 
 Of course, now that we have the network we need to train it...well, that's easy too!
 first we are going to need some dummy data...
-
+``` clojure
 (let [xor-input [[0.0 0.0] [1.0 0.0] [0.0 0.1] [1.0 1.0]]
       xor-ideal [[0.0] [1.0] [1.0] [0.0]] 
       dataset   (make-data :basic-dataset xor-input xor-ideal)
@@ -53,12 +53,12 @@ first we are going to need some dummy data...
 ;;notice how 'make-trainer' returns a function which itself expects some argumets.
 ;;in this case we're using simple back-propagation as our training scheme of preference.
 ;;feed-forward nets can be used with a variety of activations/trainers.
-
+```
 as soon as you have that, training is simply a matter of:
-
+``` clojure
 (train trainer 0.01 500 (RequiredImprovementStrategy. 5))
 ;train expects a training-method , error tolerance, iteration limit & strategies (optional)
-
+```
 
 and that's it really!
 after training finishes you can start using the network as normal. For more in depth instructions consider looking at the 2 examples found in the examples.clj ns. These include the classic xor example (trained with resilient-propagation) and the lunar lander example (trained with genetic algorithm) from the from encog wiki/books.
