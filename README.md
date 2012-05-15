@@ -8,14 +8,14 @@ Clojure wrapper for the encog (v3) machine-learning framework .
 
 -from me:
 ---------
-Encog has been around for almost 5 years hence, can be considered fairly mature and optimised. Apart from neural-nets version 3 introduced SVM and Bayesian classification. With this library which is a thin wrapper around encog, you can construct and train many types of neural nets in less than 10 lines of pure clojure code. The whole idea from the start, was to expose the user as less as possible to the Java side of things, thus eliminating any potential sharp edges of a rather big librabry like encog. Hopefully I've done a good job...feel free to try it out and more importantly, feel free to drop any comments/opinions/advice/critique etc etc...
+Encog has been around for almost 5 years, and so can be considered fairly mature and optimised. Apart from neural-nets, version 3 introduced SVM and Bayesian classification. With this library, which is a thin wrapper around encog, you can construct and train many types of neural nets in less than 10 lines of pure Clojure code. The whole idea, from the start, was to expose the user as little as possible to the Java side of things, thus eliminating any potential sharp edges of a rather big librabry like encog. Hopefully I've done a good job...feel free to try it out, and more importantly, feel free to drop any comments/opinions/advice/critique etc etc...
 
-ps: This is still work in progress. Nonethelessthe neural nets and training methods are pretty much complete - what's left at this point is data-models, randomization and the bayesian stuff...aaaa also I'm pretty sure we need tests :) ...  
+P.S.: This is still work in progress. Nonetheless the neural nets and training methods are pretty much complete - what's left at this point is data-models, randomization and the bayesian stuff...aaaa also I'm pretty sure we need tests :) ...  
 
 
 ## Usage
 
---The jar(s)?
+The jar(s)?
 -------------------
 
 As usual, it lives on clojars. Just add:
@@ -26,7 +26,7 @@ As usual, it lives on clojars. Just add:
 to your :dependencies and you 're good to go...
 
 
---Quick demo:
+Quick demo:
 -------------
 
 Ok, most the networks are already functional so let's go ahead and make one. Let's assume that for some reason we need a feed-forward net with 32 input neurons, 1 output neuron (classification), and 2 hidden layers with 50 and 10 neurons respectively...We don't really care about the activation function at this point because we are not going to do anything useful with this particular network.
@@ -68,11 +68,10 @@ and that's it really!
 after training finishes you can start using the network as normal. For more in depth instructions consider looking at the 2 examples found in the examples.clj ns. These include the classic xor example (trained with resilient-propagation) and the lunar lander example (trained with genetic algorithm) from the from encog wiki/books.
 
 
---Other stuff...
+Other stuff...
 ----------------
 Developed using Clojure 1.4
 Should work with 1.3 but not lower than that!
-Feel free to drop comments/opinions/suggestions etc...
 
 
 This is still work in progress...If you're going to do any serious ML job with it, be prepared to write some Java simply because not everything has been wrapped. The plan is not to have to write any Java code by version 1.0. 
