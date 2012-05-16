@@ -27,7 +27,8 @@
 "Constructs a MLData object given some data which can be nested as well." 
 [of-type data]
 (condp = of-type
-   :basic         (BasicMLData. (double-array data))
+   :basic         (if (number? data) (BasicMLData. data) 
+                                     (BasicMLData. (double-array data)))
    :basic-complex nil;;TODO
    :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
                                    (into-array (map double-array (second data))))

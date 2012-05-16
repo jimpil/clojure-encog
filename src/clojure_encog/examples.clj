@@ -126,7 +126,7 @@
       train-end 259
       ;evaluation-start 260
       evaluation-end (dec (count spots))
-      max-error 0.001
+      max-error 0.0001
       normalizedSunspots (normalize spots 0.9 0.1)
       test-data          (EngineArray/arrayCopy normalizedSunspots)
       closedLoopSunspots (EngineArray/arrayCopy normalizedSunspots)
@@ -142,19 +142,19 @@
 (do (. trainer iteration) ;;SVM TRAINED AND READY FOR PREDICTIONS AFTER THIS LINE
     (. nf setMaximumFractionDigits 4)
     (. nf setMinimumFractionDigits 4)
-    (println "Year\tActual\tPredict\tClosed Loop Predict")     
+    (println "Year" \tab "Actual" \tab "Predict" \tab "Closed Loop Predict")     
 (loop [evaluation-start (inc train-end)]          
-(if (== evaluation-start evaluation-end) 'FINITO
-    (let [input (make-data :basic spots)]
+(if (== evaluation-start evaluation-end) 'DONE...
+    (let [input (make-data :basic window-size)]
     (dotimes [i (. input size)] 
     (. input setData i 
-            (aget normalizedSunspots #_(+ i (- evaluation-start window-size)) i)))
+            (aget normalizedSunspots (+ i (- evaluation-start window-size)))))
               (let [output (. network compute input)
                     prediction (. output getData 0)
                     _          (aset closedLoopSunspots evaluation-start prediction)]                   
                     (dotimes [y (. input size)]
                     (. input setData y 
-                             (aget closedLoopSunspots  #_(+ y (- evaluation-start window-size)) y)))
+                             (aget closedLoopSunspots  (+ y (- evaluation-start window-size)))))
                               (let [output2 (. network compute input)
                               closed-loop (. output2 getData 0)]
                               (println  (+ start-year evaluation-start)
