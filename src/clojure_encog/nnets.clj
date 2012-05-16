@@ -72,7 +72,8 @@
       :competitive      (ActivationCompetitive.)
       :elliot           (ActivationElliott.)
       :elliot-symmetric (ActivationElliottSymmetric.)
-      :steepened-sigmoid (ActivationSteepenedSigmoid.)))
+      :steepened-sigmoid (ActivationSteepenedSigmoid.)
+ :else (throw (IllegalArgumentException. "Unsupported activation-function!"))))
 
 ;;usage: (make-activationF :tanh)
 ;;       (make-activationF :linear)

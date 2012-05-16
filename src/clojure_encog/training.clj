@@ -12,27 +12,38 @@
        (org.encog.neural.networks.training.nm  NelderMeadTraining)
        (org.encog.neural.networks.training.anneal NeuralSimulatedAnnealing)
        (org.encog.ml.data.basic BasicMLData BasicMLDataSet)
+       (org.encog.ml.data.temporal TemporalMLDataSet)
        (org.encog.ml.data.folded FoldedDataSet)
        (org.encog.ml.train MLTrain)
+       (org.encog.ml.svm.training SVMTrain)
+       (org.encog.ml.svm SVM)
        (org.encog.ml MLRegression)
-       (org.encog.neural.networks BasicNetwork)))
+       (org.encog.neural.networks BasicNetwork)
+       (org.encog.util.arrayutil NormalizeArray TemporalWindowArray)))
 
 
 
 (defn make-data 
-"Constructs a MLData object given some d" 
-[of-type & data]
+"Constructs a MLData object given some data which can be nested as well." 
+[of-type data]
 (condp = of-type
    :basic         (BasicMLData. (double-array data))
    :basic-complex nil;;TODO
    :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
                                    (into-array (map double-array (second data))))
+   ;:temporal-dataset (TemporalMLDataSet. ) 
+   :temporal-window (fn [window-size prediction-size]
+                           (let [twa (TemporalWindowArray. window-size prediction-size)]
+                           (do (. twa analyze (doubles data)) 
+                               (. twa process (doubles data)))))
+                           
+                                                          
    ;:folded (FoldedDataSet.)
-
+:else (throw (IllegalArgumentException. "Unsupported data model!"))
 ))
 
 (defmacro judge 
-"Consumer convenience for implementing the CalculateScore interface which is needed for genetic and annealing training."
+"Consumer convenience for implementing the CalculateScore interface which is needed for genetic and simulated annealing training."
 [minimize? & body]
 `(proxy [CalculateScore] [] 
   (calculateScore [^MLRegression n#] ~@body) 
@@ -56,6 +67,8 @@
                       (NeuralSimulatedAnnealing. net (judge minimize? fit-fun) startTemp stopTemp cycles))
        :resilient-prop (fn [net tr-set]      (ResilientPropagation. net tr-set))
        :nelder-mead    (fn [net tr-set step] (NelderMeadTraining. net tr-set (if (nil? step) 100 step)))
+       :svm            (fn [^SVM net tr-set] (SVMTrain. net tr-set))
+ :else (throw (IllegalArgumentException. "Unsupported training method!"))      
 ))
 
 
@@ -76,9 +89,28 @@
 (when (seq strategies) (dotimes [i (count strategies)] 
                        (.addStrategy method (nth strategies i))))
 (loop [epoch (int 1)]
-(if (< limit epoch) false
+(if (< limit epoch) false ;;failed to converge
 (do (. method iteration)
     (println "Epoch #" epoch " Error:" (. method getError))    
 (if-not (> (. method getError) 
-           error-tolerance) true 
-(recur (inc epoch))))))) 
+           error-tolerance) true ;;succeeded to converge 
+(recur (inc epoch)))))))
+
+
+(defn normalize 
+"Normalizes a seq (vector/list) of doubles (no nests) between high-end low-end and returns the normalized double array. Call seq on the result to convert it back to a clojure seq so it reads nicely on the repl." 
+[data high-end low-end] 
+(let [norm (NormalizeArray.)]
+(do (. norm setNormalizedHigh high-end)
+    (. norm setNormalizedLow  low-end)  
+    (. norm process (double-array data)))))
+
+
+
+
+
+
+
+
+
+ 
