@@ -25,18 +25,18 @@
 
 (defn make-data 
 "Constructs a MLData object given some data which can be nested as well." 
-[of-type data]
+[of-type & data]
 (condp = of-type
-   :basic         (if (number? data) (BasicMLData. data) 
-                                     (BasicMLData. (double-array data)))
+   :basic         (if (number? data) (BasicMLData. (count (first data))) 
+                                     (BasicMLData. (double-array (first data))))
    :basic-complex nil;;TODO
    :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
                                    (into-array (map double-array (second data))))
    ;:temporal-dataset (TemporalMLDataSet. ) 
    :temporal-window (fn [window-size prediction-size]
                            (let [twa (TemporalWindowArray. window-size prediction-size)]
-                           (do (. twa analyze (doubles data)) 
-                               (. twa process (doubles data)))))
+                           (do (. twa analyze (doubles (first data))) 
+                               (. twa process (doubles (first data))))))
                            
                                                           
    ;:folded (FoldedDataSet.)

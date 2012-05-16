@@ -167,7 +167,7 @@
 ;---------------------------------------------------------------------------------------------------------------
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
-(evaluate (lunar-lander 800))
-;(xor false)
-;(predict-sunspot sunspots)
+;(evaluate (lunar-lander 800))
+(xor false)
+(predict-sunspot sunspots)
 )
