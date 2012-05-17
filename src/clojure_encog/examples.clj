@@ -5,7 +5,6 @@
          (org.encog.mathutil.randomize FanInRandomizer)
          (org.encog.util EngineArray)
          (java.text NumberFormat)))
-
 ;--------------------------------------*XOR*------------------------------------------------------------
 (defn xor 
 "The classic XOR example from the encog book/wiki. You can choose whether you want to train once or keep-trying until the target is met."
@@ -17,14 +16,14 @@
                                :output  1
                                :hidden [2]} ;a single hidden layer
                                (make-activationF :sigmoid) 
-                               (make-pattern :feed-forward))
+                               (make-pattern :feed-forward)) 
       trainer   ((make-trainer :resilient-prop) network dataset)]
      ;;make use of the boolean parameter
       (if-not keep-trying? 
-              (train trainer 0.01 500 (RequiredImprovementStrategy. 5)) ;;train the network once
-      (loop [t false counter 1 _ nil] 
-      (if t (println "Nailed it the" (str counter "th") "time!")
-      (recur  (train trainer 0.01 500 (RequiredImprovementStrategy. 5))  ;;train the network until it succeeds
+              (train trainer 0.01 300 #_(RequiredImprovementStrategy. 5)) ;;train the network once
+      (loop [t false counter 0 _ nil] 
+      (if t (println "Nailed it after" (str counter) "times!")
+      (recur  (train trainer 0.01 300 #_(RequiredImprovementStrategy. 5))  ;;train the network until it succeeds
               (inc counter) (. network reset)))) )     
 (do (println "\nNeural Network Results:")
     (doseq [pair dataset] 
@@ -163,11 +162,11 @@
                                         \tab (. nf format closed-loop)) #_(debug-repl)) )
 (recur (inc evaluation-start))))))))
 
-
 ;---------------------------------------------------------------------------------------------------------------
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
 ;(evaluate (lunar-lander 800))
 (xor false)
+;(xor true)
 (predict-sunspot sunspots)
 )
