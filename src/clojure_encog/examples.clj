@@ -57,7 +57,8 @@
                              :hidden [50]} ;a single hidden layer of 50 neurons
                              (make-activationF :tanh) 
                              (make-pattern :feed-forward))
-      trainer   ((make-trainer :genetic) network (FanInRandomizer.) (pilot-score network) false  popu 0.1 0.25)
+      trainer   ((make-trainer :genetic) network (make-randomizer :nguyen-widrow) 
+                                                 (pilot-score network) false  popu 0.1 0.25)
      ]
      (loop [epoch 1
             _     nil

@@ -48,7 +48,12 @@
 ))
 
 (defn make-randomizer 
-"Constructs a Randomizer object. "
+"Constructs a Randomizer object. Options include:
+ ------------------------------------------------
+ :basic    :range   :consistent   :distort  
+ :constant :fan-in  :gaussian      :nguyen-widrow 
+ ------------------------------------------------
+ Returns a Randomizer object or a closure." 
 [type]
 (condp = type
     :basic      (BasicRandomizer.) ;random number generator with a random(current time) seed
@@ -56,7 +61,7 @@
     :consistent (fn [min-rand max-rand] (ConsistentRandomizer. min-rand max-rand)) ;consistent range randomizer
     :constant   (fn [constant] (ConstRandomizer. constant))
     :distort    (fn [factor]   (Distort. factor))
-    :fan-in     (fn [boundary sqr-root?] (FanInRandomizer. (unchecked-negate boundary) boundary (if (nil? sqr-root?) false sqr-root?)))
+    :fan-in     (fn [boundary sqr-root?] (FanInRandomizer. (- boundary) boundary (if (nil? sqr-root?) false sqr-root?)))
     :gaussian   (fn [mean st-deviation] (GaussianRandomizer. mean st-deviation))
     :nguyen-widrow  (NguyenWidrowRandomizer.)   
 ))
@@ -76,7 +81,7 @@
 
 (defn make-trainer
 "Constructs a training-method object given a method. Options inlude:
--------------------------------------------------------------
+ -------------------------------------------------------------
  :simple     :back-prop    :quick-prop      :manhattan         
  :genetic    :svm          :nelder-mead     :annealing     
  :scaled-conjugent         :resilient-prop  :pnn                
