@@ -119,7 +119,7 @@
        :neat       (fn ([score-fun minimize? input output ^Integer population-size]
        ;;neat creates a population so we don't really need an actual network. We can skip the 'make-network' bit
        ;;population can be an integer or a NEATPopulation object 
-                       (NEATTraining. (judge minimize? score-fun) input output population-size))
+                       (NEATTraining. (implement-CalculateScore minimize? score-fun) input output population-size))
                        ([score-fun minimize? ^NEATPopulation population] 
                        (NEATTraining. (implement-CalculateScore minimize? score-fun) population))) 
  :else (throw (IllegalArgumentException. "Unsupported training method!"))      
@@ -163,7 +163,10 @@
      (do (. method iteration) 
          (println "Error:" (. method getError)) 
          (. method getMethod))))
-     
+
+(defmacro evaluate 
+"This expands to EncogUtility.evaluate(). Expects a network and a dataset and does the evaluation." 
+[n ds] `(EncogUtility/evaluate ~n ~ds))     
 
 (defn normalize 
 "Normalizes a seq (vector/list) of doubles (no nests) between high-end low-end and returns the normalized double array. Call seq on the result to convert it back to a clojure seq so it reads nicely on the repl." 
