@@ -61,17 +61,33 @@ first we are going to need some dummy data...
 as soon as you have that, training is simply a matter of:
 ``` clojure
 (train trainer 0.01 500 (RequiredImprovementStrategy. 5))
-;train expects a training-method , error tolerance, iteration limit & strategies (optional)
+;train expects a training-method , error tolerance, iteration limit, strategies (a possibly empty vector)
 ```
 
 and that's it really!
 after training finishes you can start using the network as normal. For more in depth instructions consider looking at the 2 examples found in the examples.clj ns. These include the classic xor example (trained with resilient-propagation) and the lunar lander example (trained with genetic algorithm) from the from encog wiki/books.
 
+In general you should always remember:
+- Most (if not all) of the constructor-functions (e.g. make-something) accept keywords for arguments. The documentation tells you
+exactly what your options are. Some constructor-functions return other functions (closures) which then need to be called again with potentially extra arguments, in order to get the full object. 
+
+- 'make-network' is a big multi-method that is responsible for looking at what type of neural pattern has been passed in and dispatching the appropriate method. This is the 'spine' of creating networks in clojure-encog.
+
+- NeuroEvolution of Augmenting Topologies (NEAT) don't need to be initialised as seperate networks like all other networks do. Instead, we usually initialise a NEATPopulation which we then pass to NEATTraining via 
+```
+((make-trainer :neat) some-function-name true/false population)  ;OR
+((make-trainer :neat) some-function-name true/false 2 1 1000)    ;if we want a brand new population with default parameters
+```     
+
+- Simple convenience macros exist for evaluating quickly a trained network and also for implementing the CalculateScore class which is needed for doing GA or simulated-annealing training.
+
+- Ideally, check the source when any 'strange' error occurs. You don't even have to go online - it's in the jar!
 
 Other stuff...
 ----------------
-Developed using Clojure 1.4
+Developed using Clojure 1.4 and leiningen2.
 Should work with 1.3 but not lower than that!
+It seems that the stdout problem persists in leiningen2 as well... (repl hangs unless aot and "lein2 run")
 
 
 This is still work in progress...If you're going to do any serious ML job with it, be prepared to write some Java simply because not everything has been wrapped. The plan is not to have to write any Java code by version 1.0. 
