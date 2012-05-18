@@ -1,1 +1,0 @@
-(ns clojure-encog.randomization)
