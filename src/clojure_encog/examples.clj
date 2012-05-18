@@ -2,13 +2,17 @@
 (:use [clojure-encog.nnets]
       [clojure-encog.training])
 (:import (org.encog.ml.train.strategy RequiredImprovementStrategy)
+         (org.encog.neural.networks.training TrainingSetScore)
          (org.encog.mathutil.randomize FanInRandomizer)
          (org.encog.util EngineArray)
+         (org.encog.neural.neat.training NEATTraining)
+         (org.encog.neural.neat NEATPopulation NEATNetwork)
+         (org.encog.util.simple EncogUtility)
          (java.text NumberFormat)))
 ;--------------------------------------*XOR*------------------------------------------------------------
 (defn xor 
-"The classic XOR example from the encog book/wiki. You can choose whether you want to train once or keep-trying until the target is met."
-[^Boolean keep-trying?]
+"The classic XOR example from the encog book/wiki."
+[^Boolean train-to-error?]
 (let [xor-input [[0.0 0.0] [1.0 0.0] [0.0 0.1] [1.0 1.0]]
       xor-ideal [[0.0] [1.0] [1.0] [0.0]] 
       dataset   (make-data :basic-dataset xor-input xor-ideal)
@@ -19,34 +23,64 @@
                                (make-pattern :feed-forward)) 
       trainer   ((make-trainer :resilient-prop) network dataset)]
      ;;make use of the boolean parameter
-      (if-not keep-trying? 
-              (train trainer 0.001 300 [] #_[(RequiredImprovementStrategy. 5)]) ;;train the network once
-      (loop [t false counter 0 _ nil] 
-      (if t (println "Nailed it after" (str counter) "times!")
-      (recur  (train trainer 0.01 300 [] #_[(RequiredImprovementStrategy. 5)])  ;;train the network until it succeeds
-              (inc counter) (. network reset)))) )     
+      (if train-to-error? 
+         (train trainer 0.01 []) ;train to max error regardless of iterations
+         (train trainer 0.01 300 [] #_[(RequiredImprovementStrategy. 5)])) ;;train to max iterations and max error
+      
+      
+    ;(loop [t false counter 0 _ nil] 
+      ;(if t (println "Nailed it after" (str counter) "times!")
+      ;(recur  (train trainer 0.001 #_300 [] #_[(RequiredImprovementStrategy. 5)])  ;;train the network until it succeeds
+      ;        (inc counter) (. network reset))))     
 (do (println "\nNeural Network Results:")
-    (doseq [pair dataset] 
+    (EncogUtility/evaluate network dataset))))
+    
+   #_(doseq [pair dataset] 
     (let [output (. network compute (. pair getInput ))] ;;test the network
           (println (.getData (.getInput pair) 0) "," (. (. pair getInput) getData  1) 
                                                  ", actual=" (. output getData  0) 
-                                                 ", ideal=" (.getData (. pair getIdeal) 0)))))     
+                                                 ", ideal=" (.getData (. pair getIdeal) 0))))     
 
-))
+
+;---------------------------------------------------------------------------------------------------------
+;------------------------------------*XOR NEAT*-----------------------------------------------------------
+
+(defn xor-neat
+"The classic XOR example solved using NeuroEvolution of Augmenting Topologies (NEAT)."
+[train-to-error?]
+(let [xor-input [[0.0 0.0] [1.0 0.0] [0.0 0.1] [1.0 1.0]]
+      xor-ideal [[0.0] [1.0] [1.0] [0.0]] 
+      dataset    (make-data :basic-dataset xor-input xor-ideal)
+      activation (make-activationF :step)
+      population (NEATPopulation. 2 1 1000)
+      trainer    (NEATTraining. (TrainingSetScore. dataset) population)]
+                ;((make-trainer :neat) some-function-name true/false population)
+                ;this is the alternative when you have an actual Clojure function that you wan to use
+                ;as the fitness-function. Here the implementation is already provided in a Java class,
+                ;that is why I'm not using my own function instead.
+      (do (. activation setCenter 0.5)
+          (. population setNeatActivationFunction  activation)) 
+      (let [best ^NEATNetwork (if train-to-error? 
+                                 (train trainer 0.01 [])       ;;error-tolerance = 1%
+                                 (train trainer 0.01 200 []))] ;;iteration limit = 200
+              (do (println "\nNeat Network results:")
+                  (EncogUtility/evaluate best dataset))) ))
+      
+
 ;----------------------------------------------------------------------------------------------------------
 ;----------------------------------*LUNAR LANDER*-----------------------------------------------------------
 ; this example requires that you have LanderSimulation.class NeuralPilot.class in your classpath.
 ; both of them are in the jar.
 
-(defmacro pilot-score "The fitness function for the GA. You will usually pass your own to the GA." 
+(defmacro pilot-score 
+"The fitness function for the GA. You will usually pass your own to the GA. A macro that simply wraps a call to your real fitness-function is a good choice." 
 [network] 
 `(. (NeuralPilot. ~network false) scorePilot))
 
 (defn evaluate [best-evolved] 
 (println"\nHow the winning network landed:")
 (let [evolved-pilot (NeuralPilot. best-evolved true)]
-(println (. evolved-pilot scorePilot))
-(.shutdown (org.encog.Encog/getInstance))))
+(println (. evolved-pilot scorePilot))))
 
 
 (defn lunar-lander 
@@ -59,12 +93,12 @@
                              (make-pattern :feed-forward))
       trainer   ((make-trainer :genetic) network (make-randomizer :nguyen-widrow) 
                                                  (pilot-score network) false  popu 0.1 0.25)
-     ]
+     ]    
      (loop [epoch 1
             _     nil
             best  nil]
-     (if (> epoch 200) best ;;return the best evolved network 
-     (recur (inc epoch) (. trainer iteration) (. trainer getMethod) )))))
+     (if (> epoch 200)  (do (.shutdown (org.encog.Encog/getInstance)) best) ;;return the best evolved network 
+     (recur (inc epoch) (. trainer iteration) (. trainer getMethod)))) ))
 ;---------------------------------------------------------------------------------------------------------------
 ;----------------------------PREDICT-SUNSPOT_SVM------------------------------------------------------------
 
@@ -119,7 +153,7 @@
                                   
             
 (defn predict-sunspot [spots]
-"The PredictSunSpots SVM example ported to Clojure."
+"The PredictSunSpots SVM example ported to Clojure. Not so trivial as the others because it involves temporal data."
 (let [start-year  1700
       window-size 30 ;input layer count
       ;train-start window-size
@@ -167,7 +201,8 @@
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
 ;(evaluate (lunar-lander 800))
-(xor false)
+;(xor false)
 ;(xor true)
-(predict-sunspot sunspots)
+(xor-neat)
+;(predict-sunspot sunspots)
 )
