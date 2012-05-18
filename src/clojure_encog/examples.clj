@@ -20,7 +20,7 @@
       trainer   ((make-trainer :resilient-prop) network dataset)]
      ;;make use of the boolean parameter
       (if-not keep-trying? 
-              (train trainer 0.01 300 [] #_[(RequiredImprovementStrategy. 5)]) ;;train the network once
+              (train trainer 0.001 300 [] #_[(RequiredImprovementStrategy. 5)]) ;;train the network once
       (loop [t false counter 0 _ nil] 
       (if t (println "Nailed it after" (str counter) "times!")
       (recur  (train trainer 0.01 300 [] #_[(RequiredImprovementStrategy. 5)])  ;;train the network until it succeeds

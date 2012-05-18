@@ -11,7 +11,10 @@
        (org.encog.neural.networks.training.pnn TrainBasicPNN)
        (org.encog.neural.networks.training.nm  NelderMeadTraining)
        (org.encog.neural.networks.training.anneal NeuralSimulatedAnnealing)
+       (org.encog.neural.rbf RBFNetwork) 
+       (org.encog.neural.rbf.training SVDTraining)
        (org.encog.ml.data.basic BasicMLData BasicMLDataSet)
+       (org.encog.ml.data MLDataSet)
        (org.encog.ml.data.temporal TemporalMLDataSet)
        (org.encog.ml.data.folded FoldedDataSet)
        (org.encog.ml.train MLTrain)
@@ -84,7 +87,7 @@
  -------------------------------------------------------------
  :simple     :back-prop    :quick-prop      :manhattan         
  :genetic    :svm          :nelder-mead     :annealing     
- :scaled-conjugent         :resilient-prop  :pnn                
+ :scaled-conjugent         :resilient-prop  :pnn  :svd              
  ------------------------------------------------------------- 
  Returns a MLTrain object."
 [method]
@@ -104,6 +107,7 @@
        :resilient-prop (fn [net tr-set]      (ResilientPropagation. net tr-set))
        :nelder-mead    (fn [net tr-set step] (NelderMeadTraining. net tr-set (if (nil? step) 100 step)))
        :svm            (fn [^SVM net tr-set] (SVMTrain. net tr-set))
+       :svd            (fn [^RBFNetwork net ^MLDataSet tr-set] (SVDTraining. net tr-set))
  :else (throw (IllegalArgumentException. "Unsupported training method!"))      
 ))
 
@@ -136,7 +140,7 @@
                        (.addStrategy method (nth strategies i))))
      (EncogUtility/trainToError method error-tolerance))
 
-([^MLTrain method strategies] ;;requires only one iteration - SVMs or Nelder-Mead for example
+([^MLTrain method strategies] ;;need only one iteration - SVMs or Nelder-Mead for example
  (when (seq strategies) (dotimes [i (count strategies)] 
                         (.addStrategy method (nth strategies i))))
      (do (. method iteration)

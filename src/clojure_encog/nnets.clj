@@ -55,7 +55,7 @@
   :elliot   :soft-max  :competitive :bipolar-steepend
   :elliot-symmetric :clipped-linear :steepened-sigmoid
   ---------------------------------------------------
-  Returns an ActivationFunction object." 
+  Returns an ActivationFunction object." ;TODO
  [fun]
  (condp = fun 
       :tanh     (ActivationTANH.)
@@ -170,7 +170,7 @@
          (.setOutputNeurons pattern (layers :output)) 
     (. pattern generate))))
  
-(defmethod make-network RadialBasisPattern ;one hidden layer - non settable activation
+(defmethod make-network RadialBasisPattern ;usually has one hidden layer - non settable activation
 [layers _ p] ;;ignoring activation
  (let [pattern p]
     (do  (.setInputNeurons pattern  (layers :input))
