@@ -60,7 +60,7 @@ first we are going to need some dummy data...
 ```
 as soon as you have that, training is simply a matter of:
 ``` clojure
-(train trainer 0.01 500 (RequiredImprovementStrategy. 5))
+(train trainer 0.01 500 [(RequiredImprovementStrategy. 5)])
 ;train expects a training-method , error tolerance, iteration limit, strategies (a possibly empty vector)
 ```
 
@@ -79,7 +79,7 @@ exactly what your options are. Some constructor-functions return other functions
 ((make-trainer :neat) some-function-name true/false 2 1 1000)    ;if we want a brand new population with default parameters
 ```     
 
-- Simple convenience macros exist for evaluating quickly a trained network and also for implementing the CalculateScore class which is needed for doing GA or simulated-annealing training.
+- Simple convenience macros do exist for evaluating quickly a trained network and also for implementing the CalculateScore class which is needed for doing GA or simulated-annealing training.
 
 - Ideally, check the source when any 'strange' error occurs. You don't even have to go online - it's in the jar!
 
