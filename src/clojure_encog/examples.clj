@@ -9,7 +9,7 @@
          (org.encog.neural.neat NEATPopulation NEATNetwork)
          (org.encog.util.simple EncogUtility)
          (java.text NumberFormat)))
-;--------------------------------------*XOR*------------------------------------------------------------
+;--------------------------------------*XOR-CLASSIC*------------------------------------------------------------
 (defn xor 
 "The classic XOR example from the encog book/wiki."
 [^Boolean train-to-error?]
@@ -26,24 +26,24 @@
       (if train-to-error? 
          (train trainer 0.01 []) ;train to max error regardless of iterations
          (train trainer 0.01 300 [] #_[(RequiredImprovementStrategy. 5)])) ;;train to max iterations and max error
-      
+     (do (println "\nNeural Network Results:")
+     (evaluate network dataset)))) 
       
     ;(loop [t false counter 0 _ nil] 
-      ;(if t (println "Nailed it after" (str counter) "times!")
-      ;(recur  (train trainer 0.001 #_300 [] #_[(RequiredImprovementStrategy. 5)])  ;;train the network until it succeeds
-      ;        (inc counter) (. network reset))))     
-(do (println "\nNeural Network Results:")
-    (EncogUtility/evaluate network dataset))))
+    ;  (if t (println "Nailed it after" (str counter) "times!")
+    ;  (recur  (train trainer 0.001 #_300 [] #_[(RequiredImprovementStrategy. 5)])  ;;train the network until it succeeds
+    ;          (inc counter) (. network reset))))     
+
     
-   #_(doseq [pair dataset] 
-    (let [output (. network compute (. pair getInput ))] ;;test the network
-          (println (.getData (.getInput pair) 0) "," (. (. pair getInput) getData  1) 
-                                                 ", actual=" (. output getData  0) 
-                                                 ", ideal=" (.getData (. pair getIdeal) 0))))     
+  ;  (doseq [pair dataset] 
+  ;  (let [output (. network compute (. pair getInput ))] ;;test the network
+  ;       (println (.getData (.getInput pair) 0) "," (. (. pair getInput) getData  1) 
+  ;                                               ", actual=" (. output getData  0) 
+  ;                                              ", ideal=" (.getData (. pair getIdeal) 0))))     
 
 
 ;---------------------------------------------------------------------------------------------------------
-;------------------------------------*XOR NEAT*-----------------------------------------------------------
+;------------------------------------*XOR-NEAT*-----------------------------------------------------------
 
 (defn xor-neat
 "The classic XOR example solved using NeuroEvolution of Augmenting Topologies (NEAT)."
@@ -64,27 +64,28 @@
                                  (train trainer 0.01 [])       ;;error-tolerance = 1%
                                  (train trainer 0.01 200 []))] ;;iteration limit = 200
               (do (println "\nNeat Network results:")
-                  (EncogUtility/evaluate best dataset))) ))
+                  (evaluate best dataset))) ))
       
 
 ;----------------------------------------------------------------------------------------------------------
-;----------------------------------*LUNAR LANDER*-----------------------------------------------------------
+;----------------------------------*LUNAR-LANDER*-----------------------------------------------------------
 ; this example requires that you have LanderSimulation.class NeuralPilot.class in your classpath.
 ; both of them are in the jar.
 
 (defmacro pilot-score 
-"The fitness function for the GA. You will usually pass your own to the GA. A macro that simply wraps a call to your real fitness-function is a good choice." 
+"The fitness function for the GA. You will usually pass your own to the GA. A macro that simply 
+wraps a call to your real fitness-function (like here) is a good choice." 
 [network] 
 `(. (NeuralPilot. ~network false) scorePilot))
 
-(defn evaluate [best-evolved] 
+(defn try-it [best-evolved] 
 (println"\nHow the winning network landed:")
 (let [evolved-pilot (NeuralPilot. best-evolved true)]
 (println (. evolved-pilot scorePilot))))
 
 
 (defn lunar-lander 
-"The classic Lunar-Lander example that can be trained with a GA or simulated annealing."
+"The Lunar-Lander example which can be trained with a GA/simulated annealing. Returns the best evolved network."
 [popu]
 (let [network (make-network {:input   3
                              :output  1
@@ -100,7 +101,7 @@
      (if (> epoch 200)  (do (.shutdown (org.encog.Encog/getInstance)) best) ;;return the best evolved network 
      (recur (inc epoch) (. trainer iteration) (. trainer getMethod)))) ))
 ;---------------------------------------------------------------------------------------------------------------
-;----------------------------PREDICT-SUNSPOT_SVM------------------------------------------------------------
+;----------------------------PREDICT-SUNSPOT-SVM------------------------------------------------------------
 
 (def sunspots 
            [0.0262,  0.0575,  0.0837,  0.1203,  0.1883,  0.3033,  
@@ -156,13 +157,12 @@
 "The PredictSunSpots SVM example ported to Clojure. Not so trivial as the others because it involves temporal data."
 (let [start-year  1700
       window-size 30 ;input layer count
-      ;train-start window-size
+      ;train-start   window-size
       train-end 259
-      ;evaluation-start 260
       evaluation-end (dec (count spots))
-      max-error 0.0001
+      ;max-error 0.0001
       normalizedSunspots (normalize spots 0.9 0.1)
-      test-data          (EngineArray/arrayCopy normalizedSunspots)
+      ;test-data          (EngineArray/arrayCopy normalizedSunspots)
       closedLoopSunspots (EngineArray/arrayCopy normalizedSunspots)
       train-set         ((make-data :temporal-window normalizedSunspots) 
                          window-size 1) 
@@ -200,9 +200,9 @@
 ;---------------------------------------------------------------------------------------------------------------
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
-;(evaluate (lunar-lander 800))
+(try-it (lunar-lander 800))
 ;(xor false)
-;(xor true)
+(xor true)
 (xor-neat)
-;(predict-sunspot sunspots)
+(predict-sunspot sunspots)
 )
