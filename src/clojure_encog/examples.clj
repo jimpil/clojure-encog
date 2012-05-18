@@ -1,13 +1,12 @@
 (ns clojure-encog.examples
 (:use [clojure-encog.nnets]
       [clojure-encog.training])
-(:import (org.encog.ml.train.strategy RequiredImprovementStrategy)
+(:import ;(org.encog.ml.train.strategy RequiredImprovementStrategy)
          (org.encog.neural.networks.training TrainingSetScore)
-         (org.encog.mathutil.randomize FanInRandomizer)
          (org.encog.util EngineArray)
          (org.encog.neural.neat.training NEATTraining)
          (org.encog.neural.neat NEATPopulation NEATNetwork)
-         (org.encog.util.simple EncogUtility)
+         ;(org.encog.util.simple EncogUtility)
          (java.text NumberFormat)))
 ;--------------------------------------*XOR-CLASSIC*------------------------------------------------------------
 (defn xor 
