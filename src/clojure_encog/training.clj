@@ -9,8 +9,10 @@
        (org.encog.neural.networks.training.propagation.resilient ResilientPropagation)
        (org.encog.neural.networks.training.genetic NeuralGeneticAlgorithm)
        (org.encog.neural.networks.training.pnn TrainBasicPNN)
-       (org.encog.neural.networks.training.nm  NelderMeadTraining)
+       (org.encog.neural.networks.training.nm NelderMeadTraining)
        (org.encog.neural.networks.training.anneal NeuralSimulatedAnnealing)
+       (org.encog.neural.neat.training NEATTraining)
+       (org.encog.neural.neat NEATPopulation)
        (org.encog.neural.rbf RBFNetwork) 
        (org.encog.neural.rbf.training SVDTraining)
        (org.encog.ml.data.basic BasicMLData BasicMLDataSet)
@@ -22,6 +24,7 @@
        (org.encog.ml.svm SVM)
        (org.encog.ml MLRegression)
        (org.encog.util.simple EncogUtility)
+       (org.encog.util Format)
        (org.encog.neural.networks BasicNetwork)
        (org.encog.mathutil.randomize Randomizer BasicRandomizer ConsistentRandomizer 
                                      ConstRandomizer FanInRandomizer Distort GaussianRandomizer
@@ -31,7 +34,11 @@
 
 
 (defn make-data 
-"Constructs a MLData object given some data which can be nested as well." 
+"Constructs a MLData object given some data which can be nested as well. Options include:
+ ---------------------------------------------------------------------------------------
+ :basic   :basic-dataset  :temporal-window  :basic-complex (not wrapped) 
+ :folded (not wrapped) 
+ Returns the actual MLData object or a closure that needs to be called again with extra arguments." 
 [of-type & data]
 (condp = of-type
    :basic         (if (number? data) (BasicMLData. (count (first data))) 
@@ -66,7 +73,7 @@
     :distort    (fn [factor]   (Distort. factor))
     :fan-in     (fn [boundary sqr-root?] (FanInRandomizer. (- boundary) boundary (if (nil? sqr-root?) false sqr-root?)))
     :gaussian   (fn [mean st-deviation] (GaussianRandomizer. mean st-deviation))
-    :nguyen-widrow  (NguyenWidrowRandomizer.)   
+    :nguyen-widrow  (NguyenWidrowRandomizer.) ;the most performant randomizer  
 ))
 
 (defn randomize
@@ -75,7 +82,7 @@
 [^Randomizer randomizer data] 
 (. randomizer randomize data))
 
-(defmacro judge 
+(defmacro implement-CalculateScore 
 "Consumer convenience for implementing the CalculateScore interface which is needed for genetic and simulated annealing training."
 [minimize? & body]
 `(proxy [CalculateScore] [] 
@@ -85,9 +92,9 @@
 (defn make-trainer
 "Constructs a training-method object given a method. Options inlude:
  -------------------------------------------------------------
- :simple     :back-prop    :quick-prop      :manhattan         
- :genetic    :svm          :nelder-mead     :annealing     
- :scaled-conjugent         :resilient-prop  :pnn  :svd              
+ :simple     :back-prop    :quick-prop      :manhattan   :neat        
+ :genetic    :svm          :nelder-mead     :annealing   :svd  
+ :scaled-conjugent         :resilient-prop  :pnn                        
  ------------------------------------------------------------- 
  Returns a MLTrain object."
 [method]
@@ -98,16 +105,23 @@
        :quick-prop (fn [net tr-set learn-rate] (QuickPropagation. net tr-set (if (nil? learn-rate) 2.0 learn-rate)))
        :genetic    (fn [net randomizer fit-fun minimize? pop-size mutation-percent mate-percent] 
                        (NeuralGeneticAlgorithm. net randomizer 
-                                                       (judge minimize? fit-fun) 
-                                                       pop-size mutation-percent mate-percent))
+                                                   (implement-CalculateScore minimize? fit-fun) 
+                                                    pop-size mutation-percent mate-percent))
        :scaled-conjugent   (fn [net tr-set] (ScaledConjugateGradient. net tr-set))
        :pnn                (fn [net tr-set] (TrainBasicPNN. net tr-set))
        :annealing     (fn [net fit-fun minimize? startTemp stopTemp cycles] 
-                      (NeuralSimulatedAnnealing. net (judge minimize? fit-fun) startTemp stopTemp cycles))
+                          (NeuralSimulatedAnnealing. net 
+                          (implement-CalculateScore minimize? fit-fun) startTemp stopTemp cycles))
        :resilient-prop (fn [net tr-set]      (ResilientPropagation. net tr-set))
        :nelder-mead    (fn [net tr-set step] (NelderMeadTraining. net tr-set (if (nil? step) 100 step)))
        :svm            (fn [^SVM net tr-set] (SVMTrain. net tr-set))
        :svd            (fn [^RBFNetwork net ^MLDataSet tr-set] (SVDTraining. net tr-set))
+       :neat       (fn ([score-fun minimize? input output ^Integer population-size]
+       ;;neat creates a population so we don't really need an actual network. We can skip the 'make-network' bit
+       ;;population can be an integer or a NEATPopulation object 
+                       (NEATTraining. (judge minimize? score-fun) input output population-size))
+                       ([score-fun minimize? ^NEATPopulation population] 
+                       (NEATTraining. (implement-CalculateScore minimize? score-fun) population))) 
  :else (throw (IllegalArgumentException. "Unsupported training method!"))      
 ))
 
@@ -124,27 +138,31 @@
                 
                                
 (defn train 
-"Does the actual training. This is a potentially lengthy and costly process so most type hints have been provided. Returns true or false depending on whether the error target was met within the iteration limit. This is an overloaded fucntion. It is up to you whether you want to provide limits for error-tolerance, iteration-number or both."
-([^MLTrain method ^Double error-tolerance ^Integer limit strategies] ;;eg: (new RequiredImprovementStrategy 5)
+"Does the actual training. This is a potentially lengthy and costly process so most type hints have been provided. Returns true or false depending on whether the error target was met within the iteration limit. This is an overloaded fucntion. It is up to you whether you want to provide limits for error-tolerance, iteration-number or both. Regardless of the limitations however, this  functions will always return the best network so far."
+([^MLTrain method ^Double error-tolerance ^Integer limit strategies] ;;eg: [(new RequiredImprovementStrategy 5)]
 (when (seq strategies) (dotimes [i (count strategies)] 
                        (.addStrategy method (nth strategies i))))
      (loop [epoch (int 1)]
-       (if (< limit epoch) false ;;failed to converge
+       (if (< limit epoch) (. method getMethod) ;failed to converge - return the best network
        (do (. method iteration)
-           (println "Epoch #" epoch " Error:" (. method getError))    
-       (if-not (> (. method getError) error-tolerance) true ;;succeeded to converge 
+           (println "Iteration #" (Format/formatInteger epoch) 
+                    "Error:" (Format/formatPercent (. method getError)) 
+                    "Target-Error:" (Format/formatPercent error-tolerance))
+       (if-not (> (. method getError) error-tolerance) (. method getMethod) ;;succeeded to converge -return the best network 
        (recur (inc epoch)))))))
 
 ([^MLTrain method ^Double error-tolerance strategies] 
 (when (seq strategies) (dotimes [i (count strategies)] 
                        (.addStrategy method (nth strategies i))))
-     (EncogUtility/trainToError method error-tolerance))
+(do (EncogUtility/trainToError method error-tolerance)
+                                (. method getMethod)))
 
 ([^MLTrain method strategies] ;;need only one iteration - SVMs or Nelder-Mead for example
  (when (seq strategies) (dotimes [i (count strategies)] 
                         (.addStrategy method (nth strategies i))))
-     (do (. method iteration)
-         (println "Error:" (. method getError)))))
+     (do (. method iteration) 
+         (println "Error:" (. method getError)) 
+         (. method getMethod))))
      
 
 (defn normalize 
