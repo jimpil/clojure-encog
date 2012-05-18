@@ -74,7 +74,7 @@ exactly what your options are. Some constructor-functions return other functions
 - 'make-network' is a big multi-method that is responsible for looking at what type of neural pattern has been passed in and dispatching the appropriate method. This is the 'spine' of creating networks in clojure-encog.
 
 - NeuroEvolution of Augmenting Topologies (NEAT) don't need to be initialised as seperate networks like all other networks do. Instead, we usually initialise a NEATPopulation which we then pass to NEATTraining via 
-```
+``` clojure
 ((make-trainer :neat) some-function-name true/false population)  ;OR
 ((make-trainer :neat) some-function-name true/false 2 1 1000)    ;if we want a brand new population with default parameters
 ```     
