@@ -8,7 +8,7 @@
        
 (org.encog.engine.network.activation 
        ActivationTANH ActivationSigmoid ActivationGaussian ActivationBiPolar 
-       ActivationLinear  ActivationLOG ActivationRamp ActivationSoftMax 
+       ActivationLinear  ActivationLOG ActivationRamp ActivationSoftMax ActivationStep
        ActivationSIN ActivationBipolarSteepenedSigmoid ActivationClippedLinear
        ActivationCompetitive ActivationElliott ActivationElliottSymmetric ActivationSteepenedSigmoid)     
     
@@ -67,6 +67,7 @@
       :ramp     (ActivationRamp.)
       :sin      (ActivationSIN.)
       :soft-max (ActivationSoftMax.)
+      :step     (ActivationStep.)
       :bipolar-steepend (ActivationBipolarSteepenedSigmoid.)
       :clipped-linear   (ActivationClippedLinear.)
       :competitive      (ActivationCompetitive.)
@@ -80,7 +81,7 @@
 
 (defmulti make-network 
 "Constructs a neural-network given some layers, an activation and a neural pattern. layers has to be map with 3 keys {:input x :output y :hidden [k j & more]} where :hidden holds a vector whose size is the number of desirable hidden layers. The layers are added sequentially to the input layer so first hidden layer will have k neurons, the second j neurons and so forth. Some networks do not accept hidden layers and thus the parameter is ignored. See example usage below.
- Returns the complete neural-network object with randomized weights or in case of SVMs and PNNs a function, that needs to be called again (potentially with nil arguments) in order to produce the Pattern object.
+ Returns the complete neural-network object with randomized weights or in case of SVMs and PNNs a function, that needs to be called again (potentially with nil arguments) in order to produce the actual SVM/PNN object.
  example: 
   (make-network {:input 32 
                  :output 1 
