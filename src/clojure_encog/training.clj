@@ -29,10 +29,11 @@
        (org.encog.mathutil.randomize Randomizer BasicRandomizer ConsistentRandomizer 
                                      ConstRandomizer FanInRandomizer Distort GaussianRandomizer
                                      NguyenWidrowRandomizer RangeRandomizer)
-       (org.encog.util.arrayutil NormalizeArray TemporalWindowArray)))
+       (org.encog.util.arrayutil TemporalWindowArray)))
 
 
-
+;--------------------------------------*SOURCE*--------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------------------------------------
 (defn make-data 
 "Constructs a MLData object given some data which can be nested as well. Options include:
  ---------------------------------------------------------------------------------------
@@ -41,16 +42,16 @@
  Returns the actual MLData object or a closure that needs to be called again with extra arguments." 
 [of-type & data]
 (condp = of-type
-   :basic         (if (number? data) (BasicMLData. (count (first data))) 
-                                     (BasicMLData. (double-array (first data))))
-   :basic-complex nil;;TODO
+   :basic         (if (number? data) (BasicMLData. (count (first data))) ;initialised empty  
+                                     (BasicMLData. (double-array (first data)))) ;initialised with data
+   :basic-complex nil ;;TODO
    :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
                                    (into-array (map double-array (second data))))
    ;:temporal-dataset (TemporalMLDataSet. ) 
    :temporal-window (fn [window-size prediction-size]
                            (let [twa (TemporalWindowArray. window-size prediction-size)]
                            (do (. twa analyze (doubles (first data))) 
-                               (. twa process (doubles (first data))))))
+                               (. twa process (doubles (first data)))))) ;returns array of doubles
                            
                                                           
    ;:folded (FoldedDataSet.)
@@ -61,7 +62,7 @@
 "Constructs a Randomizer object. Options include:
  ------------------------------------------------
  :basic    :range   :consistent   :distort  
- :constant :fan-in  :gaussian      :nguyen-widrow 
+ :constant :fan-in  :gaussian     :nguyen-widrow 
  ------------------------------------------------
  Returns a Randomizer object or a closure." 
 [type]
@@ -88,6 +89,11 @@
 `(proxy [CalculateScore] [] 
   (calculateScore [^MLRegression n#] ~@body) 
   (shouldMinimize [] ~minimize?)))
+  
+(defmacro add-strategies [^MLTrain method & strategies]
+"Consumer convenience for adding strategies to a training method."
+`(doseq [s# ~@strategies]
+ (.addStrategy ~method s#)))  
 
 (defn make-trainer
 "Constructs a training-method object given a method. Options inlude:
@@ -157,7 +163,7 @@
 (do (EncogUtility/trainToError method error-tolerance)
                                 (. method getMethod)))
 
-([^MLTrain method strategies] ;;need only one iteration - SVMs or Nelder-Mead for example
+([^MLTrain method strategies] ;;need only one iteration - SVMs or Nelder-Mead training for example
  (when (seq strategies) (dotimes [i (count strategies)] 
                         (.addStrategy method (nth strategies i))))
      (do (. method iteration) 
@@ -165,22 +171,8 @@
          (. method getMethod))))
 
 (defmacro evaluate 
-"This expands to EncogUtility.evaluate(). Expects a network and a dataset and does the evaluation." 
-[n ds] `(EncogUtility/evaluate ~n ~ds))     
-
-(defn normalize 
-"Normalizes a seq (vector/list) of doubles (no nests) between high-end low-end and returns the normalized double array. Call seq on the result to convert it back to a clojure seq so it reads nicely on the repl." 
-[data high-end low-end] 
-(let [norm (NormalizeArray.)]
-(do (. norm setNormalizedHigh high-end)
-    (. norm setNormalizedLow  low-end)  
-    (. norm process (double-array data)))))
-    
-    
-
-
-
-
+"This expands to EncogUtility.evaluate(n,d). Expects a network and a dataset and prints the evaluation." 
+[n ds] `(EncogUtility/evaluate ~n ~ds)) 
 
 
 
