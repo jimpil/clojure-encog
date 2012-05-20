@@ -1,6 +1,7 @@
 (ns clojure-encog.examples
 (:use [clojure-encog.nnets]
-      [clojure-encog.training])
+      [clojure-encog.training]
+      [clojure-encog.normalization])
 (:import ;(org.encog.ml.train.strategy RequiredImprovementStrategy)
          (org.encog.neural.networks.training TrainingSetScore)
          (org.encog.util EngineArray)
@@ -152,15 +153,16 @@ wraps a call to your real fitness-function (like here) is a good choice."
             0.0659,  0.1428,  0.4838,  0.8127]) 
                                   
             
-(defn predict-sunspot [spots]
+(defn predict-sunspot 
 "The PredictSunSpots SVM example ported to Clojure. Not so trivial as the others because it involves temporal data."
+[spots]
 (let [start-year  1700
       window-size 30 ;input layer count
       ;train-start   window-size
       train-end 259
       evaluation-end (dec (count spots))
       ;max-error 0.0001
-      normalizedSunspots (normalize spots 0.9 0.1)
+      normalizedSunspots (normalize spots :array-range :ceiling 0.9 :floor 0.1)
       ;test-data          (EngineArray/arrayCopy normalizedSunspots)
       closedLoopSunspots (EngineArray/arrayCopy normalizedSunspots)
       train-set         ((make-data :temporal-window normalizedSunspots) 
@@ -197,6 +199,88 @@ wraps a call to your real fitness-function (like here) is a good choice."
 (recur (inc evaluation-start))))))))
 
 ;---------------------------------------------------------------------------------------------------------------
+;--------------------------------*NORMALIZATION EXAMPLE*--------------------------------------------------------
+(def dummy1 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0])
+(def dummy2 [[1.0 2.0 -3.0 4.0 5.0] 
+           [ -11.0 12.0 -13.0 14.0 -15.0] 
+           [ -2 5 7 -9 8]])
+
+(defn norm-ex-1d [] ;;example with 1d array
+(let [source dummy1
+      length (count source) 
+      raw-input     (make-input source :forNetwork? false :type :array-1d)         
+      input-field   (raw-input);no parameters are necessary here
+      output-field  ((make-output input-field  :type :range-mapped) 0.1 0.9) ;low & high  
+      target        (make-target-storage :norm-array length)
+      ready         ((prepare :range [input-field] ;needs to be seqable
+                                     [output-field] ;same here 
+                                     :ceiling 0.9 
+                                     :floor   0.1) false target)]                        
+(println   (seq ready) "\n---------- THESE 2 SHOULD BE IDENTICAL! ----------------\n" )
+
+;this version skips initialising input/output fields and storage targets...
+;Uses arrays directly but only supports 1 dimension.
+(seq (prepare :array-range nil nil ;inputs & outputs are nil
+                :raw-seq source 
+                :forNetwork? false
+                :ceiling 0.9
+                :floor 0.1))
+))
+
+
+
+(defn norm-ex-2d [] ;;example with 2d array
+(let [source dummy2
+      column-length (count (first source)) ;5
+      row-length  (count source) ;3
+      ;ceiling 0.9 
+      ;floor 0.1 
+      raw-input        (make-input source :forNetwork? false :type :array-2d)
+      input-fields-2d  (for [i (range column-length)] (raw-input i)) ;i=index2         
+      ;input-field   (raw-input);
+      output-fields-2d   (for [i input-fields-2d] ((make-output i :type :range-mapped) 0.1 0.9)) ;low-high
+      ;output-fields-2d  (raw-output 0.1 0.9)  
+      target           (make-target-storage :norm-array2d row-length column-length)
+      ready          ((prepare :range input-fields-2d ;already seqables
+                                      output-fields-2d  
+                                      :ceiling 0.9 
+                                      :floor   0.1) false target)]                 
+
+                  
+(println  (map seq (seq ready)) "\n--------------------------------\n" )
+
+))
+
+(defn norm-csv [] ;using EncogAnalyst
+(let [source-filename "test2.txt"
+      target-filename "generated2.txt"]
+ (do ((prepare :csv-range nil nil) source-filename 
+                                   target-filename true) 
+      (println "DONE!"))))
+ 
+ 
+(defn norm-csv2 []  ;using input/output fields and storage
+(let [source "test2.txt"
+      target "generated-MY.txt"
+      columns 4
+      max (- 0.1)
+      min (- 0.9)
+      input-fields (for [i (range columns)] ((make-input (java.io.File. source) :forNetwork? false 
+                                      :type :csv 
+                                      :column-offset i)))
+      output-fields (for [i input-fields] ((make-output i :type :range-mapped) min max))
+      storage ((make-target-storage :norm-csv) target)
+      ready ((prepare :range input-fields 
+                             output-fields
+                             :ceiling max
+                             :floor   min) false storage)] 
+    ))
+
+
+;------------------------------------------------------------------------------------------------------------
+
+
+
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
 (try-it (lunar-lander 800))
