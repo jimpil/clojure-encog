@@ -194,6 +194,24 @@ wraps a call to your real fitness-function (like here) is a good choice."
                                         \tab (. nf format prediction)
                                         \tab (. nf format closed-loop)) #_(debug-repl)) )
 (recur (inc evaluation-start))))))))
+;--------------------------------------------------------------------------------------------------------------
+;--------------------------------*SIMPLE SOM EXAMPLE*----------------------------------------------------------
+            
+(defn simple-som []
+(let [input [[-1.0, -1.0, 1.0, 1.0 ] 
+             [1.0, 1.0, -1.0, -1.0]]
+      dataset (make-data :basic-dataset input nil);there is no ideal data (unsupervised)
+      network (make-network {:input 4 :output 2} nil (make-pattern :som))
+      trainer ((make-trainer :basic-som) network 0.7 dataset (make-neighborhoodF :single))      
+     ]
+     ;(do (train trainer 0.1 10))
+     (dotimes [i 10] (.iteration trainer)) ;training complete
+     (let [d1 (make-data :basic (first input))
+           d2 (make-data :basic (second input))]
+           (do (println "Pattern 1 winner:" (. network classify d1)) 
+               (println "Pattern 2 winner:" (. network classify d2))  
+           network)) ;returns the trained network at the end    
+))            
 
 ;---------------------------------------------------------------------------------------------------------------
 ;--------------------------------*NORMALIZATION EXAMPLE*--------------------------------------------------------
@@ -215,7 +233,7 @@ wraps a call to your real fitness-function (like here) is a good choice."
                                      :floor   0.1) false target)]                        
 (println   (seq ready) "\n---------- THESE 2 SHOULD BE IDENTICAL! ----------------\n" )
 
-;this version skips initialising input/output fields and storage targets...
+;the version below skips initialising input/output fields and storage targets...
 ;Uses arrays directly but only supports 1 dimension.
 (seq (prepare :array-range nil nil ;inputs & outputs are nil
                 :raw-seq source 
