@@ -158,12 +158,9 @@ wraps a call to your real fitness-function (like here) is a good choice."
 [spots]
 (let [start-year  1700
       window-size 30 ;input layer count
-      ;train-start   window-size
       train-end 259
       evaluation-end (dec (count spots))
-      ;max-error 0.0001
-      normalizedSunspots (normalize spots :array-range :ceiling 0.9 :floor 0.1)
-      ;test-data          (EngineArray/arrayCopy normalizedSunspots)
+      normalizedSunspots (prepare :array-range nil nil :raw-seq spots :ceiling 0.9 :floor 0.1);using quick method
       closedLoopSunspots (EngineArray/arrayCopy normalizedSunspots)
       train-set         ((make-data :temporal-window normalizedSunspots) 
                          window-size 1) 
@@ -283,9 +280,9 @@ wraps a call to your real fitness-function (like here) is a good choice."
 
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
-(try-it (lunar-lander 800))
 ;(xor false)
-(xor true)
-(xor-neat)
+(xor false)
+(xor-neat true)
 (predict-sunspot sunspots)
+(try-it (lunar-lander 800))
 )
