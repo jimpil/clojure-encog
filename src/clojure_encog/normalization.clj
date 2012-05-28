@@ -39,7 +39,7 @@
 (defn make-input
 "Constructs an input field to be used with the DataNormalization class. Options include:
 ----------------------------------------------------------------------------------------
-:basic   :csv   :array-1d    :array2d  
+:basic   :csv   :array-1d    :array-2d  
 ----------------------------------------------------------------------------------------" 
 [element &{:keys [forNetwork? type column-offset index2] 
            :or {forNetwork? true type :array-1d column-offset 5}}] 
@@ -88,15 +88,17 @@
 (defn normalize "Function for producing normalised values. It is normally being used from within the main normalize function."
 [how ins outs max min , batch? storage] ;ins must be a seq
 (let [norm  (make-data-normalization storage)]
-;(if (= InputFieldCSV (class ins)) (dotimes [i ] (. norm addInputField ins) 
-;                                      (. norm addOutputField outs) 
-;                                      (. norm process))
 (do  (dotimes [i (count ins)] 
        (. norm addInputField  (nth ins i))
        (. norm addOutputField (nth outs i)))                
     (. norm process) 
- (if (= InputFieldCSV (class (first ins))) (println "SUCCESS...!")  ;;Not elegant
- (.getArray storage))))) ;returns the normalised array found into the storage target
+    
+    (if (every? #(= InputFieldCSV (class %)) ins) 
+        (println "SUCCESS...!");there is nothing to return
+    (.getArray storage)))))
+    
+ ;(if (every? (= InputFieldCSV (class (first ins))) (println "SUCCESS...!")  ;;Not elegant
+ ;(.getArray storage))))) ;returns the normalised array found into the storage target
   
    
  ;(do  #_(println (seq (second source) ))
@@ -143,12 +145,12 @@
        ;maps a seq of numbers to a specific range. For Support Vector Machines and many neural networks based on the 
        ;HTAN activation function the input must be in the range of -1 to 1. If you are using a sigmoid activation function
        ;you should normalize to the range 0 - 1.
-       :range            (partial normalize :range-mapped inputs outputs ceiling floor)   
+       :range          (partial normalize :range-mapped inputs outputs ceiling floor)   
        ;z-axis should be used when you need a consistent vector length, often for SOMs. Usually a better choice than multiplicative
-       :z-axis           (partial normalize :z-axis inputs outputs ceiling floor)
+       :z-axis         (partial normalize :z-axis inputs outputs ceiling floor)
        ;multiplicative normalisation can be very useful for vector quantization and when you need a consistent vector length. 
        ;It may also perform better than z-axis when all of the input fields are near 0.
-       :multiplicative   (partial normalize :multiplicative inputs outputs ceiling floor)
+       :multiplicative (partial normalize :multiplicative inputs outputs ceiling floor)
        ;reciprocal normalization is always normalizing to a number in the range between 0 and 1. Very simple technique.
        :reciprocal  nil ;TODO 
 ))                       
