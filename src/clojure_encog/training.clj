@@ -49,10 +49,11 @@
 [of-type & data]
 (condp = of-type
    :basic         (if (number? data) (BasicMLData. (count (first data))) ;initialised empty  
-                                     (BasicMLData. (double-array (first data)))) ;initialised with data
+                                     (BasicMLData. (double-array (first data)))) ;initialised with train data
    :basic-complex nil ;;TODO
    :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
-                                   (into-array (map double-array (second data))))
+                                   (if (nil? (second data)) nil ;there is no ideal data 
+                                       (into-array (map double-array (second data)))))
    ;:temporal-dataset (TemporalMLDataSet. ) 
    :temporal-window (fn [window-size prediction-size]
                            (let [twa (TemporalWindowArray. window-size prediction-size)]
