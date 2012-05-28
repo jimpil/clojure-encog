@@ -12,8 +12,13 @@
        (org.encog.neural.networks.training.nm NelderMeadTraining)
        (org.encog.neural.networks.training.anneal NeuralSimulatedAnnealing)
        (org.encog.neural.neat.training NEATTraining)
+       (org.encog.neural.som.training.basic BasicTrainSOM)
+       (org.encog.neural.som.training.basic.neighborhood 
+                                    NeighborhoodFunction NeighborhoodRBF NeighborhoodRBF1D 
+                                    NeighborhoodBubble NeighborhoodSingle)
        (org.encog.neural.neat NEATPopulation)
-       (org.encog.neural.rbf RBFNetwork) 
+       (org.encog.neural.rbf RBFNetwork)
+       (org.encog.neural.som SOM) 
        (org.encog.neural.rbf.training SVDTraining)
        (org.encog.ml.data.basic BasicMLData BasicMLDataSet)
        (org.encog.ml.data MLDataSet)
@@ -26,6 +31,7 @@
        (org.encog.util.simple EncogUtility)
        (org.encog.util Format)
        (org.encog.neural.networks BasicNetwork)
+       (org.encog.mathutil.rbf RBFEnum)
        (org.encog.mathutil.randomize Randomizer BasicRandomizer ConsistentRandomizer 
                                      ConstRandomizer FanInRandomizer Distort GaussianRandomizer
                                      NguyenWidrowRandomizer RangeRandomizer)
@@ -57,6 +63,38 @@
    ;:folded (FoldedDataSet.)
 :else (throw (IllegalArgumentException. "Unsupported data model!"))
 ))
+
+(defn make-neighborhoodF 
+"To be used with SOMs. Options for type include:
+ -----------------------------------------------
+ :single  :bubble  :rbf  :rbf1D
+ -----------------------------------------------" 
+[type] 
+(condp = type 
+       :single (NeighborhoodSingle.) 
+       :bubble (fn [radius] (NeighborhoodBubble. (int radius)))
+       :rbf    (fn [^RBFEnum t & dims] (NeighborhoodRBF. (int-array dims) t))
+       :rbf1D  (fn [^RBFEnum r] (NeighborhoodRBF1D. r))
+))
+
+;;example-usage: 
+; (make-neighborhoodF :single)
+; (make-neighborhoodF :bubble 5)
+; ((make-neighborhoodF :rbf1D) (make-RBFEnum :gaussian))
+; ((make-neighborhoodF :rbf)   (make-RBFEnum :mexican-hat) 2 3 5) 
+
+(defn make-RBFEnum
+ "Returns the appropriate RBFEnum given the provided preference. 
+ This function is typically used in conjuction with 'make-neighborhoodF' in case 
+ we choose rbf/rbf1D neighborhood functions. Generally this will be a :gaussian function.
+ Other options include :multiquadric, :inverse-multiquadric, :mexican-hat." 
+ [what] 
+ (condp = what
+        :gaussian     (RBFEnum/Gaussian)
+        :multiquadric (RBFEnum/Multiquadric)
+        :inverse-multiquadric  (RBFEnum/InverseMultiquadric)
+        :mexican-hat  (RBFEnum/MexicanHat)
+ ))
 
 (defn make-randomizer 
 "Constructs a Randomizer object. Options include:
@@ -122,12 +160,14 @@
        :nelder-mead    (fn [net tr-set step] (NelderMeadTraining. net tr-set (if (nil? step) 100 step)))
        :svm            (fn [^SVM net tr-set] (SVMTrain. net tr-set))
        :svd            (fn [^RBFNetwork net ^MLDataSet tr-set] (SVDTraining. net tr-set))
+       :basic-som      (fn [^SOM net learn-rate ^MLDataSet tr-set ^NeighborhoodFunction neighborhood] 
+                            (BasicTrainSOM. net learn-rate tr-set neighborhood))
        :neat       (fn ([score-fun minimize? input output ^Integer population-size]
-       ;;neat creates a population so we don't really need an actual network. We can skip the 'make-network' bit
+       ;;neat creates a population so we don't really need an actual network. We can skip the 'make-network' bit.
        ;;population can be an integer or a NEATPopulation object 
-                       (NEATTraining. (implement-CalculateScore minimize? score-fun) input output population-size))
+                          (NEATTraining. (implement-CalculateScore minimize? score-fun) input output population-size))
                        ([score-fun minimize? ^NEATPopulation population] 
-                       (NEATTraining. (implement-CalculateScore minimize? score-fun) population))) 
+                          (NEATTraining. (implement-CalculateScore minimize? score-fun) population))) 
  :else (throw (IllegalArgumentException. "Unsupported training method!"))      
 ))
 
