@@ -86,9 +86,9 @@
 (defmacro implement-CalculateScore 
 "Consumer convenience for implementing the CalculateScore interface which is needed for genetic and simulated annealing training."
 [minimize? & body]
-`(proxy [CalculateScore] [] 
-  (calculateScore [^MLRegression n#] ~@body) 
-  (shouldMinimize [] ~minimize?)))
+`(reify CalculateScore 
+  (^double calculateScore  [this ^MLRegression n#] ~@body) 
+  (^boolean shouldMinimize [this] ~minimize?)))
   
 (defmacro add-strategies [^MLTrain method & strategies]
 "Consumer convenience for adding strategies to a training method."
