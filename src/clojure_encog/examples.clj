@@ -298,9 +298,9 @@ wraps a call to your real fitness-function (like here) is a good choice."
 
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
-;(xor false)
+;(xor true)
 (xor false)
-(xor-neat true)
+(xor-neat false)
 (predict-sunspot sunspots)
-(try-it (lunar-lander 800))
+(try-it (lunar-lander 1000))
 )
