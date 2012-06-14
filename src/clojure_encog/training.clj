@@ -190,12 +190,12 @@
 (when (seq strategies) (dotimes [i (count strategies)] 
                        (.addStrategy method (nth strategies i))))
      (loop [epoch (int 1)]
-       (if (< limit epoch) (. method getMethod) ;failed to converge - return the best network
-       (do (. method iteration)
+       (if (< limit epoch) (.getMethod method) ;failed to converge - return the best network
+       (do (.iteration method)
            (println "Iteration #" (Format/formatInteger epoch) 
                     "Error:" (Format/formatPercent (. method getError)) 
                     "Target-Error:" (Format/formatPercent error-tolerance))
-       (if-not (> (. method getError) error-tolerance) (. method getMethod) ;;succeeded to converge -return the best network 
+       (if-not (> (.getError method) error-tolerance) (.getMethod method) ;;succeeded to converge -return the best network 
        (recur (inc epoch)))))))
 
 ([^MLTrain method ^Double error-tolerance strategies] 
@@ -207,9 +207,9 @@
 ([^MLTrain method strategies] ;;need only one iteration - SVMs or Nelder-Mead training for example
  (when (seq strategies) (dotimes [i (count strategies)] 
                         (.addStrategy method (nth strategies i))))
-     (do (. method iteration) 
-         (println "Error:" (. method getError)) 
-         (. method getMethod))))
+     (do (.iteration method) 
+         (println "Error:" (.getError method)) 
+         (.getMethod method))))
 
 (defmacro evaluate 
 "This expands to EncogUtility.evaluate(n,d). Expects a network and a dataset and prints the evaluation." 
