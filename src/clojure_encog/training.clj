@@ -51,9 +51,10 @@
    :basic         (if (number? data) (BasicMLData. (count (first data))) ;initialised empty  
                                      (BasicMLData. (double-array (first data)))) ;initialised with train data
    :basic-complex nil ;;TODO
-   :basic-dataset (BasicMLDataSet. (into-array (map double-array (first data))) 
+   :basic-dataset (if (nil? data)  (BasicMLDataSet.) ;initialised empty 
+                  (BasicMLDataSet. (into-array (map double-array (first data))) 
                                    (if (nil? (second data)) nil ;there is no ideal data 
-                                       (into-array (map double-array (second data)))))
+                                       (into-array (map double-array (second data))))))
    ;:temporal-dataset (TemporalMLDataSet. ) 
    :temporal-window (fn [window-size prediction-size]
                            (let [twa (TemporalWindowArray. window-size prediction-size)]
@@ -186,7 +187,7 @@
                                
 (defn train 
 "Does the actual training. This is a potentially lengthy and costly process so most type hints have been provided. Returns true or false depending on whether the error target was met within the iteration limit. This is an overloaded fucntion. It is up to you whether you want to provide limits for error-tolerance, iteration-number or both. Regardless of the limitations however, this  functions will always return the best network so far."
-([^MLTrain method ^Double error-tolerance ^Integer limit strategies] ;;eg: [(new RequiredImprovementStrategy 5)]
+([^MLTrain method ^Double error-tolerance ^Integer limit strategies] ;;eg: [(new RequiredImprovementStrategy 5)] or nil
 (when (seq strategies) (dotimes [i (count strategies)] 
                        (.addStrategy method (nth strategies i))))
      (loop [epoch (int 1)]
