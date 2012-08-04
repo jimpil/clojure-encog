@@ -74,12 +74,16 @@
                            (MultiplicativeGroup.) input-field))
        :nominal    (fn [one-of-n? high low]
                     (if one-of-n?
-                      (let [o (OutputOneOf. high low)] ;simplistic one-of-n method (not very good)
-                         (do (. o addItem input-field) o))
-                      (let [eq (OutputEquilateral. low high)] ;better alternative for nominal values usually
-                         (do (. eq addItem input-field) eq))))  
+                      (doto (OutputOneOf. high low)       ;simplistic one-of-n method (not very good)
+                            (.addItem input-field))
+                      (doto (OutputEquilateral. low high) ;better alternative for nominal values usually
+                            (.addItem input-field))))
       :else (throw (IllegalArgumentException. "Unsupported output-field type!")) 
 ))
+
+
+                         
+
 
 (defmacro make-data-normalization [storage] 
 `(let [dn# (DataNormalization.)]
