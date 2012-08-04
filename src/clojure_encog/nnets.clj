@@ -91,104 +91,95 @@
 (fn [layers activation pattern] (class pattern)));;dispatch function only cares about the class of the pattern
 
 (defmethod make-network FeedForwardPattern
-[layers activation p] 
- (let [pattern p]
+[layers activation pattern] 
     (do 
        (.setInputNeurons pattern  (layers :input))
        (.setOutputNeurons pattern (layers :output))
        (.setActivationFunction pattern activation);many activations are allowed here
  (dotimes [i (count (layers :hidden))] 
          (.addHiddenLayer pattern ((layers :hidden) i)))
-         (.generate pattern))))  ;;finally, return the complete network object
+         (.generate pattern)))  ;;finally, return the complete network object
  
-(defmethod make-network ADALINEPattern ;no hidden layers - only ActivationLinear 
-[layers _ p] ;;ignoring activation 
-(let [pattern p]
+(defmethod make-network ADALINEPattern ;no hidden layers - only ActivationLinear
+[layers _ pattern] ;;ignoring activation 
     (doto pattern  
-         (.setInputNeurons  (layers :input))
+         (.setInputNeurons  (layers :input))   
          (.setOutputNeurons (layers :output)))
-    (.generate pattern))) 
+    (.generate pattern)) 
 
 
 (defmethod make-network ART1Pattern ;;no hidden layers - only ActivationLinear
-[layers _ p] ;;ignoring activation 
-(let [pattern p]
+[layers _ pattern] ;;ignoring activation 
     (doto pattern  
          (.setInputNeurons  (layers :input))
          (.setOutputNeurons (layers :output)))
-    (.generate pattern)))
- 
+    (.generate pattern))
+
 (defmethod make-network BAMPattern ;no hidden layers - only ActivationBiPolar
-[layers _ p] ;;ignoring layers and activation 
-(let [pattern p]
+[layers _ pattern] ;;ignoring layers and activation 
     (doto pattern  
          (.setF1Neurons (layers :input))
          (.setF2Neurons (layers :output)))
-    (.generate pattern))) 
+    (.generate pattern))
  
 (defmethod make-network BoltzmannPattern ;;no hidden layers - only ActivationBipolar
-[layers _ p] ;;ignoring activation 
-(let [pattern p]
+[layers _ pattern] ;;ignoring activation 
     (do  
     (.setInputNeurons pattern  (layers :input))
-    (.generate pattern))))
+    (.generate pattern)))
  
 (defmethod make-network CPNPattern ;;one hidden layer - only ActivationBipolar + Competitive
-[layers _ p] ;;ignoring activation 
-(let [pattern p]
+[layers _ pattern] ;;ignoring activation 
     (doto pattern  
          (.setInputNeurons  (layers :input))
          (.setInstarCount   ((layers :hidden) 0))
          (.setOutputNeurons (layers :output)))
-    (.generate pattern)))
+    (.generate pattern))
  
-(defmethod make-network ElmanPattern ;;one hidden layer only - settable activation
-[layers activation p] 
- (let [pattern p]
+(defmethod make-network ElmanPattern;;one hidden layer only - settable activation
+[layers activation pattern] 
     (doto pattern  
          (.setInputNeurons  (layers :input))
          (.setOutputNeurons (layers :output))
          (.addHiddenLayer ((layers :hidden) 0))
          (.setActivationFunction activation)) 
-    (.generate pattern)))
- 
+    (.generate pattern))
+
+
 (defmethod make-network HopfieldPattern ;;one hidden layer only - settable activation
-[layers activation p] 
- (let [pattern p]
+[layers activation pattern] 
     (doto pattern 
          (.setInputNeurons  (layers :input))
          (.setOutputNeurons (layers :output))
          (.addHiddenLayer   ((layers :hidden) 0))
          (.setActivationFunction activation))
-    (.generate pattern)))    
+    (.generate pattern))   
  
  
 (defmethod make-network JordanPattern ;;one hidden layer only - settable activation
-[layers activation p] 
- (let [pattern p]
+[layers activation pattern] 
     (doto pattern 
          (.setInputNeurons (layers :input))
          (.setOutputNeurons (layers :output))
          (.addHiddenLayer  ((layers :hidden) 0))
          (.setActivationFunction pattern activation))
-   (.generate pattern)))
- 
+   (.generate pattern))
+
+
 (defmethod make-network SOMPattern ;non settable activation - no hidden layers
-[layers activation p] 
- (let [pattern p]
+[layers _ pattern] ;;ignoring activation
     (doto pattern  
          (.setInputNeurons  (layers :input))
          (.setOutputNeurons (layers :output)))
-    (.generate pattern)))
+    (.generate pattern))
  
 (defmethod make-network RadialBasisPattern ;usually has one hidden layer - non settable activation
-[layers _ p] ;;ignoring activation
- (let [pattern p]
+[layers _ pattern] ;;ignoring activation
     (doto pattern  
          (.setInputNeurons  (layers :input))
          (.setOutputNeurons (layers :output))
          (.addHiddenLayer ((layers :hidden) 0)))
-    (.generate pattern)))
+    (.generate pattern))
     
     
 ;(defmethod make-network RSOMPattern ;;no hidden layers - non settable activation
@@ -203,9 +194,8 @@
 ;;This function needs to be called again (with nil arguments for defaults) in order to get the actual pattern object.
     
 (defmethod make-network SVMPattern ;;no hidden layers - non settable activation
-[layers _ p] ;;ignoring activation
+[layers _ pattern] ;;ignoring activation
  (fn [svm-type kernel-type] ;;returns a function which will return the actual network
- (let [pattern p]
     (doto pattern 
          (.setInputNeurons (layers :input))
          (.setOutputNeurons 1) ;only one output is allowed
@@ -213,7 +203,7 @@
                          (.setKernelType kernel-type))
          (when-not (nil? svm-type) 
                          (.setSVMType svm-type))) 
-    (.generate pattern))))
+    (.generate pattern)))
     
 (defmethod make-network PNNPattern ;;no hidden layers - only LinearActivation 
 [layers _ p] ;;ignoring activation
