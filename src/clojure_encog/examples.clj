@@ -7,6 +7,7 @@
          (org.encog.util EngineArray)
          (org.encog.neural.neat.training NEATTraining)
          (org.encog.neural.neat NEATPopulation NEATNetwork)
+         (org.encog.ml.kmeans KMeansClustering)
          ;(org.encog.util.simple EncogUtility)
          (java.text NumberFormat)))
 ;--------------------------------------*XOR-CLASSIC*------------------------------------------------------------
@@ -58,8 +59,8 @@
                 ;this is the alternative when you have an actual Clojure function that you wan to use
                 ;as the fitness-function. Here the implementation is already provided in a Java class,
                 ;that is why I'm not using my own function instead.
-      (do (. activation setCenter 0.5)
-          (. population setNeatActivationFunction  activation)) 
+      (do (.setCenter activation 0.5)
+          (.setNeatActivationFunction population activation)) 
       (let [best ^NEATNetwork (if train-to-error? 
                                  (train trainer 0.01 [])       ;;error-tolerance = 1%
                                  (train trainer 0.01 200 []))] ;;iteration limit = 200
@@ -214,7 +215,7 @@ wraps a call to your real fitness-function (like here) is a good choice."
 ))            
 
 ;---------------------------------------------------------------------------------------------------------------
-;--------------------------------*NORMALIZATION EXAMPLE*--------------------------------------------------------
+;--------------------------------*NORMALIZATION EXAMPLES*--------------------------------------------------------
 (def dummy1 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0])
 (def dummy2 [[1.0 2.0 -3.0 4.0 5.0] 
            [ -11.0 12.0 -13.0 14.0 -15.0] 
@@ -280,7 +281,8 @@ wraps a call to your real fitness-function (like here) is a good choice."
       columns 4
       max (- 0.1)
       min (- 0.9)
-      input-fields (for [i (range columns)] ((make-input (java.io.File. source) :forNetwork? false 
+      input-fields (for [i (range columns)] 
+                      ((make-input (java.io.File. source) :forNetwork? false 
                                       :type :csv 
                                       :column-offset i)))
       output-fields (for [i input-fields] ((make-output i :type :range-mapped) min max))
@@ -293,14 +295,31 @@ wraps a call to your real fitness-function (like here) is a good choice."
 
 
 ;------------------------------------------------------------------------------------------------------------
+;-----------------------------*CLUSTERING EXAMPLE*-----------------------------------------------------------
+
+(defn kmeans [k]  ;simple k-means clustering 
+(let [raw-data [[28 15 22] [16 15 32] [32 20 44] [1 2 3] [3 2 1]] ;the data to be clustered
+      wrapped-data (map #(make-data :basic %) raw-data)   ;wrap each inner vector into a BasicMLData object
+      dataset (let [ds (make-data :basic-dataset)] (doseq [el wrapped-data] (.add ds el)) ds) ;make dataset with no ideal data
+      kmeans  (KMeansClustering. k dataset) ;the actual K-Means object
+      ready   (.iteration kmeans 100) ;100 iterations is more than enough for this toy-dataset
+      clusters (.getClusters kmeans) ; the actual clusters - an array of MLCluster objects
+      numClusters (.numClusters kmeans)] ; the total number of clusters (k)
+      {:number-of-clusters numClusters 
+       :clusters clusters 
+       :cluster1-contents (str (.getData (first clusters)))
+       :cluster2-contents (str (.getData (second clusters)))}
+       ))
 
 
+;---------------------------------------------------------------------------------------------------------------
 
 ;run the lunar lander example using main otherwise the repl will hang under leiningen. 
 (defn -main [] 
 ;(xor true)
 (xor false)
 (xor-neat false)
+(kmeans 2)
 (predict-sunspot sunspots)
 (try-it (lunar-lander 1000))
 )
